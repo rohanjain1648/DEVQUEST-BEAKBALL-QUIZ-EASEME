@@ -1,0 +1,81 @@
+/* Styles for Quiz Cards */
+.quiz-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin: 10px 0;
+}
+
+/* Styles for Progress Bar */
+.progress-container {
+    height: 20px;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #76c7c0;
+    transition: width 0.3s;
+}
+
+/* Styles for Buttons */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.bg-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.bg-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Styles for Timer */
+.timer {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+    background-color: #121212;
+    color: #ffffff;
+}
+
+.quiz-card.dark-mode {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+.progress-container.dark-mode {
+    background-color: #333;
+}
+
+.progress-bar.dark-mode {
+    background-color: #76c7c0;
+}
+
+.btn.dark-mode {
+    background-color: #444;
+    color: #ffffff;
+}

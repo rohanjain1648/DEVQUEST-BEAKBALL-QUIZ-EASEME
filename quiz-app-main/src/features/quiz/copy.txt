@@ -1,0 +1,351 @@
+import * as React from "react";
+import { getQuestion } from "./quizApiHandler";
+import "../../Styles/quiz.css";
+import { CheckAns, shuffleArray } from "../../utils/commonFunction";
+import {
+  saveEmailToLocalStorage,
+  getEmailFromLocalStorage,
+  RemoveEmailFromStorage,
+} from "../login/loginUser";
+
+import Timer from "../timer/Timer";
+
+const Quiz = () => {
+  const [email, setEmail] = React.useState(null);
+
+  const [questionArr, setQuestionArr] = React.useState([]);
+  const [redirectToQuiz, setRedirectToQuiz] = React.useState(false);
+
+  const [ansArr, setAnsArr] = React.useState([]);
+
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+  };
+
+  React.useEffect(() => {
+    RemoveEmailFromStorage();
+  }, [email]);
+
+  const handleSaveEmail = () => {
+    saveEmailToLocalStorage(email);
+    setRedirectToQuiz(true);
+    // savedEmail = email
+  };
+
+  const savedEmail = getEmailFromLocalStorage();
+
+  const getQuestionHandler = async (id) => {
+    await getQuestion(id)
+      .then((res) => {
+        console.log("res =", res?.data?.results);
+        let arr = res?.data?.results?.map((item, index) => {
+          return {
+            ans: "",
+            question: item?.question,
+            status: index == 0 ? "visited" : "unvisited",
+          };
+        });
+
+        setAnsArr(arr);
+        let arr2 = res?.data?.results?.map((item, index) => {
+          return {
+            ...item,
+            incorrect_answers: [
+              ...item?.incorrect_answers,
+              item?.correct_answer,
+            ],
+          };
+        });
+        console.log("arr2", arr2);
+        // arr2=shuffleArray(arr2)
+        setQuestionArr(arr2);
+      })
+      .catch((err) => {});
+  };
+
+  const [questionIndex, setquestionIndex] = React.useState(0);
+  React.useEffect(() => {
+    console.log("sdsd");
+    getQuestionHandler("15");
+  }, []);
+  React.useEffect(() => {
+    console.log("Ans ", ansArr);
+  }, [ansArr]);
+
+  const [score, setScore] = React.useState(0);
+
+  React.useEffect(() => {
+    let arr = [...ansArr];
+    if (arr[questionIndex]?.status === "unvisited") {
+      // Create a copy of the array
+      const newArr = [...arr];
+
+      // Update the status property in the copied array
+      newArr[questionIndex].status = "visited";
+
+      // Update the state with the new array
+      setAnsArr(newArr);
+    }
+  }, [questionIndex]);
+
+  const [submit, setSubmit] = React.useState(false);
+
+  return (
+    <div className="container mt-4 quiz">
+      <div>
+        {!savedEmail ? (
+          <div className="d-flex justify-content-center align-items-center height">
+            <div>
+              <h2>Quiz App ExamEase</h2>
+              <input
+                className="h-100 rounded px-3 py-1 mt-3"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={handleEmailChange}
+              />
+              <button
+                className="bg-success border fw-medium ms-3 p-1 px-3 rounded text-bg-danger"
+                onClick={handleSaveEmail}
+              >
+                Start Quiz
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="float-end fs-6 fw-bold text-success">
+            @ User{savedEmail}
+          </p>
+        )}
+      </div>
+      <div>
+        {!submit && redirectToQuiz && (
+          <Timer setSubmit={setSubmit} submit={submit} />
+        )}
+        {!submit && redirectToQuiz && (
+          <div className="row border shadow ">
+            <div className="col-8 main-height">
+              <div className="mt-3 mx-3">
+                {questionArr.length > 0 && (
+                  <>
+                    <div className="py-2">
+                      {/* <h5>{questionArr[questionIndex]?.questionIndex}</h5> */}
+                      <p className="border fw-medium p-3 rounded text-dark">
+                        <h6 className="fw-bold ">
+                          Question {questionIndex + 1}
+                        </h6>
+                        {questionArr[questionIndex]?.question}
+                      </p>
+                    </div>
+                    <div className="d-grid">
+                      {questionArr[questionIndex]?.incorrect_answers.map(
+                        (value, index) => (
+                          <label key={index}>
+                            <input
+                              className="fs-4"
+                              type="radio"
+                              name={"option"}
+                              value={ansArr[questionIndex]?.ans}
+                              checked={ansArr[questionIndex]?.ans === value}
+                              // checked={selectedValue === value}
+
+                              onChange={() => {
+                                console.log(value);
+                                let arr = [...ansArr];
+                                arr[questionIndex].ans = value;
+                                setAnsArr(arr);
+
+                                let arr2 = [...ansArr];
+                                if (arr2[questionIndex]?.status === "visited") {
+                                  // Create a copy of the array
+                                  const newArr = [...arr2];
+
+                                  // Update the status property in the copied array
+                                  newArr[questionIndex].status = "attempt";
+
+                                  // Update the state with the new array
+                                  setAnsArr(newArr);
+                                }
+                              }}
+                            />
+                            {value}
+                          </label>
+                        )
+                      )}
+                    </div>
+                  </>
+                )}
+                <div
+                  style={{ display: "flex", justifyContent: "space-around" }}
+                  className="mt-4"
+                >
+                  {questionIndex > 0 && (
+                    <button
+                      className="bg-white border px-4 shadow"
+                      onClick={() => {
+                        setquestionIndex(questionIndex - 1);
+                      }}
+                    >
+                      {" "}
+                      Prev
+                    </button>
+                  )}
+                  {questionIndex < questionArr.length - 1 && (
+                    <button
+                      className="bg-white border px-4 shadow"
+                      onClick={() => {
+                        setquestionIndex(questionIndex + 1);
+                      }}
+                    >
+                      Next
+                    </button>
+                  )}
+                  {questionIndex == questionArr.length - 1 && (
+                    <button
+                      className="badge bg-success border px-4 shadow text-bg-danger"
+                      onClick={() => {
+                        setSubmit(true);
+                        setEmail(null);
+                        // RemoveEmailFromStorage();
+                      }}
+                    >
+                      Submit
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="col-4">
+              <div
+                className="px-4 shadow  border mt-4 px-4 "
+                style={{
+                  height: "450px",
+                }}
+              >
+                <div className="">
+                  <div className="d-flex justify-content-between mt-3">
+                    <h6>
+                      Question {questionIndex + 1} / {questionArr.length}
+                    </h6>
+                    <p>Need Help ? </p>
+                  </div>
+                  <div>
+                    {ansArr?.map((item, index) => {
+                      return (
+                        <button
+                          className="border-0 mb-3 ms-2 rounded-5 w-auto px-2"
+                          style={{
+                            background:
+                              item?.status == "attempt" ? "#6499E9" : "#BEFFF7",
+                          }}
+                          onClick={() => {
+                            setScore(CheckAns(questionArr, ansArr));
+                            setquestionIndex(index);
+                          }}
+                        >
+                          {index + 1}{" "}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {submit && (
+        <div>
+          <h2>Score : {score}</h2>
+          <div>
+            <div
+              style={{
+                display: "flex",
+                // border: (item?.correct_answer===ansArr[index]?.ans)?"1px solid green":"1px solid red"
+              }}
+            >
+              <div
+                className="alert"
+                style={{ width: "50%", border: "1px solid black" }}
+              >
+                Question
+              </div>
+              <div
+                className="alert"
+                style={{ width: "25%", border: "1px solid black" }}
+              >
+                Answer
+              </div>
+              <div
+                className="alert"
+                style={{ width: "25%", border: "1px solid black" }}
+              >
+                Status
+              </div>
+            </div>
+            {ansArr?.map((item, index) => {
+              return (
+                <div
+                  key={"ans" + index}
+                  style={{
+                    display: "flex",
+                    // border: (item?.correct_answer===ansArr[index]?.ans)?"1px solid green":"1px solid red"
+                  }}
+                >
+                  <div
+                    className="p-3 fw-medium "
+                    style={{
+                      width: "50%",
+                      border: "1px solid black",
+                      color:
+                        item?.correct_answer === ansArr[index]?.ans
+                          ? "green"
+                          : "red",
+                      fontWeight:
+                        item?.correct_answer === ansArr[index]?.ans
+                          ? "400px"
+                          : "",
+                    }}
+                  >
+                    {index + 1}) {item?.question}
+                  </div>
+                  <div
+                    className="p-3"
+                    style={{ width: "25%", border: "1px solid black" }}
+                  >
+                    {ansArr[index]?.ans}
+                  </div>
+                  <div
+                    className="fs-5 fw-medium  p-3"
+                    style={{ width: "25%", border: "1px solid black" }}
+                  >
+                    {ansArr[index]?.status}
+                  </div>
+                </div>
+              );
+            })}
+            <div className="align-items-center d-flex justify-content-center mt-4 pb-3">
+              <button
+                className="bg-danger border-0 fw-bold px-4 rounded-1 text-white"
+                onClick={() => {
+                  if (window.confirm("Are you sure to restart ?") == true) {
+                    RemoveEmailFromStorage();
+                    setEmail(null);
+                    setSubmit(false);
+                    setRedirectToQuiz(false);
+                    setAnsArr();
+                  }
+                }}
+              >
+                Restart
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Quiz;
